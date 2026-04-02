@@ -1,14 +1,11 @@
 (function() {
     'use strict';
 
-    const STORAGE_KEY = 'qrcode_history';
-    const MAX_HISTORY_ITEMS = 20;
     const AUTO_GENERATE_DELAY = 500;
 
     let currentQRCode = null;
     let currentQRData = null;
     let autoGenerateTimeout = null;
-    let history = [];
 
     const elements = {
         contentInput: document.getElementById('contentInput'),
@@ -27,10 +24,6 @@
         typeBadge: document.getElementById('typeBadge'),
         errorMessage: document.getElementById('errorMessage'),
         themeToggle: document.getElementById('themeToggle'),
-        historySection: document.getElementById('historySection'),
-        historyList: document.getElementById('historyList'),
-        historyEmpty: document.getElementById('historyEmpty'),
-        clearHistoryBtn: document.getElementById('clearHistoryBtn'),
         dragDropOverlay: document.getElementById('dragDropOverlay'),
         qrColor: document.getElementById('qrColor'),
         bgColor: document.getElementById('bgColor'),
@@ -41,9 +34,7 @@
 
     function init() {
         loadTheme();
-        loadHistory();
         bindEvents();
-        updateHistoryUI();
     }
 
     function loadTheme() {
@@ -52,25 +43,6 @@
             document.documentElement.setAttribute('data-theme', savedTheme);
         } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    }
-
-    function loadHistory() {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                history = JSON.parse(saved);
-            }
-        } catch (e) {
-            history = [];
-        }
-    }
-
-    function saveHistory() {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-        } catch (e) {
-            console.warn('Failed to save history:', e);
         }
     }
 
@@ -85,7 +57,6 @@
         elements.copyBtn.addEventListener('click', copyContent);
         elements.shareBtn.addEventListener('click', shareQRCode);
         elements.themeToggle.addEventListener('click', toggleTheme);
-        elements.clearHistoryBtn.addEventListener('click', clearHistory);
         elements.qrColor.addEventListener('input', debounce(generateQRCode, 300));
         elements.bgColor.addEventListener('input', debounce(generateQRCode, 300));
 
@@ -299,7 +270,6 @@
                     elements.qrInfo.textContent = `Tamanho: ${size}x${size}px | ~${canvasSize}`;
                 }
                 showQRResult();
-                addToHistory(currentQRData);
             }, 100);
 
         } catch (error) {
@@ -468,134 +438,6 @@
         hideQRResult();
         showError('');
         detectContentType('');
-    }
-
-    function addToHistory(data) {
-        const existingIndex = history.findIndex(item => item.content === data.content);
-        if (existingIndex !== -1) {
-            history.splice(existingIndex, 1);
-        }
-
-        history.unshift({...data, id: Date.now()});
-
-        if (history.length > MAX_HISTORY_ITEMS) {
-            history = history.slice(0, MAX_HISTORY_ITEMS);
-        }
-
-        saveHistory();
-        updateHistoryUI();
-    }
-
-    function updateHistoryUI() {
-        if (history.length === 0) {
-            elements.historyEmpty.style.display = 'block';
-            return;
-        }
-
-        elements.historyEmpty.style.display = 'none';
-        
-        const existingItems = elements.historyList.querySelectorAll('.history-item');
-        existingItems.forEach(item => item.remove());
-
-        history.forEach((item, index) => {
-            const historyItem = createHistoryItem(item, index);
-            elements.historyList.appendChild(historyItem);
-        });
-    }
-
-    function createHistoryItem(item, index) {
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.dataset.index = index;
-
-        const preview = document.createElement('div');
-        preview.className = 'history-item-preview';
-
-        const content = document.createElement('div');
-        content.className = 'history-item-content';
-        content.textContent = item.content;
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'history-item-delete';
-        deleteBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>';
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteHistoryItem(index);
-        });
-
-        div.appendChild(preview);
-        div.appendChild(content);
-        div.appendChild(deleteBtn);
-
-        div.addEventListener('click', () => {
-            restoreFromHistory(item);
-        });
-
-        generateMiniQRCode(preview, item.content, item.qrColor, item.bgColor);
-
-        return div;
-    }
-
-    function generateMiniQRCode(container, content, qrColor, bgColor) {
-        try {
-            const qrDiv = document.createElement('div');
-            container.appendChild(qrDiv);
-            
-            const qr = new QRCode(qrDiv, {
-                text: content,
-                width: 100,
-                height: 100,
-                colorDark: qrColor || '#000000',
-                colorLight: bgColor || '#ffffff',
-                correctLevel: QRCode.CorrectLevel.L
-            });
-
-            setTimeout(() => {
-                const img = qrDiv.querySelector('img');
-                const canvas = qrDiv.querySelector('canvas');
-                if (img) {
-                    img.style.maxWidth = '100%';
-                    img.style.maxHeight = '100%';
-                } else if (canvas) {
-                    canvas.style.maxWidth = '100%';
-                    canvas.style.maxHeight = '100%';
-                }
-            }, 50);
-        } catch (error) {
-            container.innerHTML = '<span style="font-size:12px;color:#999;">Erro</span>';
-        }
-    }
-
-    function restoreFromHistory(item) {
-        elements.contentInput.value = item.content;
-        elements.qrColor.value = item.qrColor || '#000000';
-        elements.bgColor.value = item.bgColor || '#ffffff';
-
-        const sizeBtn = document.querySelector(`.size-btn[data-size="${item.size}"]`);
-        if (sizeBtn) {
-            sizeBtns.forEach(b => b.classList.remove('active'));
-            sizeBtn.classList.add('active');
-        }
-
-        detectContentType(item.content);
-        generateQRCode();
-        showToast('QR Code restaurado!', 'success');
-    }
-
-    function deleteHistoryItem(index) {
-        history.splice(index, 1);
-        saveHistory();
-        updateHistoryUI();
-        showToast('Item removido do histórico');
-    }
-
-    function clearHistory() {
-        if (history.length === 0) return;
-        
-        history = [];
-        saveHistory();
-        updateHistoryUI();
-        showToast('Histórico limpo');
     }
 
     function showToast(message, type = '') {
