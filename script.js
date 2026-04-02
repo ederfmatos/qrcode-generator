@@ -323,6 +323,40 @@
         }
     }
 
+    function createStyledQRImage(sourceCanvas, bgColor) {
+        const size = sourceCanvas.width;
+        const padding = Math.round(size * 0.08);
+        const borderRadius = Math.round(size * 0.1);
+        const outputSize = size + padding * 2;
+
+        const outputCanvas = document.createElement('canvas');
+        outputCanvas.width = outputSize;
+        outputCanvas.height = outputSize;
+        const ctx = outputCanvas.getContext('2d');
+
+        ctx.fillStyle = bgColor;
+        roundRect(ctx, 0, 0, outputSize, outputSize, borderRadius);
+        ctx.fill();
+
+        ctx.drawImage(sourceCanvas, padding, padding, size, size);
+
+        return outputCanvas;
+    }
+
+    function roundRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    }
+
     function downloadQRCode() {
         if (!currentQRData) return;
 
@@ -342,10 +376,12 @@
             return;
         }
 
+        const styledCanvas = createStyledQRImage(canvas, currentQRData.bgColor);
+
         const link = document.createElement('a');
         const fileName = `qrcode_${Date.now()}.png`;
         link.download = fileName;
-        link.href = canvas.toDataURL('image/png');
+        link.href = styledCanvas.toDataURL('image/png');
         link.click();
 
         showToast('QR Code baixado!', 'success');
@@ -374,7 +410,8 @@
         const canvas = elements.qrWrapper.querySelector('canvas');
         
         if (canvas) {
-            canvas.toBlob(async (blob) => {
+            const styledCanvas = createStyledQRImage(canvas, currentQRData.bgColor);
+            styledCanvas.toBlob(async (blob) => {
                 try {
                     if (navigator.share && navigator.canShare) {
                         const file = new File([blob], 'qrcode.png', { type: 'image/png' });
