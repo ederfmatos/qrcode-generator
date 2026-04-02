@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de QR Code</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <rect x="18" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <rect x="2" y="18" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <rect x="20" y="20" width="8" height="8" fill="currentColor"/>
+                </svg>
+                <h1>Gerador de QR Code</h1>
+            </div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+                <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"/>
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+                <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+        </header>
+
+        <main class="main-content">
+            <div class="card">
+                <div class="input-section">
+                    <div class="input-header">
+                        <label for="contentInput">Conteúdo</label>
+                        <span class="type-badge" id="typeBadge">
+                            <span class="type-icon"></span>
+                            <span class="type-text"></span>
+                        </span>
+                    </div>
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="contentInput" 
+                            placeholder="Digite URL, telefone, texto..."
+                            rows="3"
+                            spellcheck="false"
+                        ></textarea>
+                        <button class="clear-input-btn" id="clearInput" aria-label="Limpar">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="drag-drop-overlay" id="dragDropOverlay">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <p>Solte para adicionar</p>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="setting-group">
+                        <label>Tamanho</label>
+                        <div class="size-options">
+                            <button class="size-btn" data-size="128">Pequeno</button>
+                            <button class="size-btn active" data-size="256">Médio</button>
+                            <button class="size-btn" data-size="512">Grande</button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group colors-group">
+                        <label> cores</label>
+                        <div class="color-options">
+                            <div class="color-picker">
+                                <input type="color" id="qrColor" value="#000000">
+                                <span>QR</span>
+                            </div>
+                            <div class="color-picker">
+                                <input type="color" id="bgColor" value="#ffffff">
+                                <span>Fundo</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="generate-btn" id="generateBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                    Gerar QR Code
+                </button>
+
+                <div class="qr-display" id="qrDisplay">
+                    <div class="qr-placeholder" id="qrPlaceholder">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+                        </svg>
+                        <p>QR Code aparecerá aqui</p>
+                    </div>
+                    <div class="qr-result" id="qrResult">
+                        <div class="qr-wrapper" id="qrWrapper"></div>
+                        <div class="qr-info" id="qrInfo"></div>
+                    </div>
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner"></div>
+                        <p>Gerando...</p>
+                    </div>
+                </div>
+
+                <div class="actions-section" id="actionsSection">
+                    <button class="action-btn" id="downloadBtn" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Baixar PNG
+                    </button>
+                    <button class="action-btn" id="copyBtn" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        Copiar Texto
+                    </button>
+                    <button class="action-btn" id="shareBtn" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="18" cy="5" r="3"/>
+                            <circle cx="6" cy="12" r="3"/>
+                            <circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        Compartilhar
+                    </button>
+                </div>
+
+                <p class="error-message" id="errorMessage"></p>
+            </div>
+
+            <div class="history-section" id="historySection">
+                <div class="history-header">
+                    <h2>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        Histórico
+                    </h2>
+                    <button class="clear-history-btn" id="clearHistoryBtn">
+                        Limpar Tudo
+                    </button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <div class="history-empty" id="historyEmpty">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 8v4l3 3"/>
+                            <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                        <p>Nenhum QR Code gerado ainda</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Desenvolvido com vanilla JS + QRCode.js</p>
+        </footer>
+    </div>
+
+    <div class="toast" id="toast">
+        <span class="toast-message"></span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
